@@ -5,11 +5,15 @@ import java.util.List;
 import java.util.Scanner;
 
 public class Main {
+  private static List<Article> articles; //private쓰는 이유 같은 이름이 나올수 있으니까
+
+  static {
+    articles = new ArrayList<>();
+  }
+
   public static void main(String[] args) {
     System.out.println("== 프로그램 시작 ==");
     Scanner sc = new Scanner(System.in);
-
-    List<Article> articles = new ArrayList<>();
 
     int lastArticleId = 0;
 
@@ -31,23 +35,24 @@ public class Main {
           continue;
         }
 
-        System.out.println("번호 | 조회 | 제목");
+        System.out.println("번호 | 조회 | 제목");// 조회수 기능 추가
         for ( int i = articles.size() - 1; i >= 0; i-- ) {
           Article article = articles.get(i);
 
-          System.out.printf("%4d | %4d | %s\n", article.id, article.hit , article.title);
+          System.out.printf("%4d | %4d | %s\n", article.id, article.hit, article.title);// 조회수 기능 추가,%4d -> 4칸 먼저 확보하고 출력
         }
       }
       else if ( cmd.equals("article write") ) {
         int id = lastArticleId + 1;
-        lastArticleId = id;
-        String regDate = Util.getNotDateStr();
+        lastArticleId = id;//GIT, 게시물 작성 시 작성날짜도 저장
+        String regDate = Util.getNotDateStr();//GIT, 게시물 작성 시 작성날짜도 저장
         System.out.printf("제목 : ");
         String title = sc.nextLine();
         System.out.printf("내용 : ");
         String body = sc.nextLine();
 
-        Article article = new Article(id, regDate, title, body);
+        lastArticleId = id;
+        Article article = new Article(id, regDate, title, body);//GIT, 게시물 작성 시 작성날짜도 저장
 
         articles.add(article);
 
@@ -58,74 +63,54 @@ public class Main {
         int id = Integer.parseInt(cmdBits[2]); // "1" => 1
 
         // article detail 1
-        Article foundArticle = null;
-
-        for ( int i = 0; i < articles.size(); i++ ) {
-          Article article = articles.get(i);
-
-          if ( article.id == id ) {
-            foundArticle = article;
-            break;
-          }
-        }
+        Article foundArticle = getArticleById(id);
 
         if ( foundArticle == null ) {
           System.out.printf("%d번 게시물은 존재하지 않습니다.\n", id);
           continue;
         }
 
-        foundArticle.increaseHit();
+        foundArticle.increaseHit();//increaseHit증가, 게시물 리스팅 출력 형식 수정, 조회수 기능 추가
 
         System.out.printf("번호 : %d\n", foundArticle.id);
-        System.out.printf("날짜 : %s\n", foundArticle.regDate);
+        System.out.printf("날짜 : %s\n", "2025-12-12 12:12:12");
+        System.out.printf("날짜 : %s\n", foundArticle.regDate);//GIT, 게시물 작성 시 작성날짜도 저장
         System.out.printf("제목 : %s\n", foundArticle.title);
         System.out.printf("내용 : %s\n", foundArticle.body);
-        System.out.printf("조회 : %s\n", foundArticle.hit);
+        System.out.printf("조회 : %d\n", foundArticle.hit);// 게시물 리스팅 출력 형식 수정, 조회수 기능 추가
       }
-      else if ( cmd.startsWith("article modify ") ) {
+
+      else if ( cmd.startsWith("article modify ") ) {//게시물 수정 기능 구현
         String[] cmdBits = cmd.split(" ");
-        int id = Integer.parseInt(cmdBits[2]);
+        int id = Integer.parseInt(cmdBits[2]); // "1" => 1
 
-        Article foundArticle = null;
+        // article detail 1
+        Article foundArticle = getArticleById(id);
 
-        for ( int i = 0; i < articles.size(); i++ ) {
-          Article article = articles.get(i);
-
-          if ( article.id == id ) {
-            foundArticle = article;
-            break;
-          }
-        }
-
-        if ( foundArticle == null) {
+        if ( foundArticle == null ) {
           System.out.printf("%d번 게시물은 존재하지 않습니다.\n", id);
           continue;
         }
 
-        System.out.printf("제목 : ");
-        String title = sc.nextLine();
-        System.out.printf("내용 : ");
-        String body = sc.nextLine();
+        System.out.printf("제목 : ");//게시물 수정 기능 구현
+        String title = sc.nextLine();//게시물 수정 기능 구현
+        System.out.printf("내용 : ");//게시물 수정 기능 구현
+        String body = sc.nextLine();//게시물 수정 기능 구현
 
-        foundArticle.title = title;
-        foundArticle.body = body;
+        foundArticle.title = title;//게시물 수정 기능 구현
+        foundArticle.body = body;//게시물 수정 기능 구현
 
-        System.out.printf("%d번 게시물이 수정되었습니다.", id);
+        System.out.printf("%d번 게시물이 수정되었습니다.", id);//게시물 수정 기능 구현
+
       }
+
       else if ( cmd.startsWith("article delete ") ) {
         String[] cmdBits = cmd.split(" ");
         int id = Integer.parseInt(cmdBits[2]);
 
-        int foundIndex = -1;
+        int foundIndex = getArticleIndexById(id);
 
-        for ( int i = 0; i < articles.size(); i++ ) {
-          Article article = articles.get(i);
 
-          if ( article.id == id ) {
-            foundIndex = i;
-            break;
-          }
-        }
 
         if ( foundIndex == -1 ) {
           System.out.printf("%d번 게시물은 존재하지 않습니다.\n", id);
@@ -136,30 +121,54 @@ public class Main {
 
         System.out.printf("%d번 게시물이 삭제되었습니다.\n", id);
       }
+
     }
 
     sc.close();
-
     System.out.println("== 프로그램 끝 ==");
+  }
+
+  private static Article getArticleById(int id) {
+    int index = getArticleIndexById(id);
+
+    if(index != 1) {
+      return articles.get(index);
+    }
+
+    return null;
+  }
+
+  private static int getArticleIndexById(int id) {//같은 static끼리 소통됨
+    int i = 0;
+
+    for (Article article : articles) { //향상된 for문
+      if (article.id == id) {
+        return i;
+      }
+
+      i++;//인덱스값을 못찾아서
+    }
+    return -1;
   }
 }
 
 class Article {
   int id;
-  String regDate;
+  String regDate;//GIT, 게시물 작성 시 작성날짜도 저장
   String title;
   String body;
-  int hit;
+  int hit;// 게시물 리스팅 출력 형식 수정, 조회수 기능 추가
 
-  public Article(int id, String regDate, String title, String body) {
+
+  public Article( int id, String regDate, String title, String body){
     this.id = id;
-    this.regDate = regDate;
+    this.regDate = regDate;//GIT, 게시물 작성 시 작성날짜도 저장
     this.title = title;
     this.body = body;
-    this.hit = 0;
+    this.hit = 0;// 게시물 리스팅 출력 형식 수정, 조회수 기능 추가
   }
 
-  public void increaseHit() {
+  public void increaseHit() {// 게시물 리스팅 출력 형식 수정, 조회수 기능 추가
     hit++;
   }
 }
